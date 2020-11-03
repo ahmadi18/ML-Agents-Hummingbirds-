@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using System;
 using Unity.MLAgents.Sensors;
+using UnityEngine.Rendering.Universal.Internal;
 //note: make sure you have the MLAgents namespace installed
 
 /// <summary>
@@ -182,6 +183,57 @@ public class HummingbirdAgent : Agent
         sensor.AddObservation(toFlower.magnitude / FlowerArea.AreaDiameter);
 
          // 10 yotal observations
+    }
+
+    /// <summary>
+    /// When behavior type is set to "Heuristic Only"  on the agent's behaviour parameters,
+    /// this function will be called. Its return values will be fed into
+    /// <see cref="OnActionReceived(float[])"/> instead of the neural network
+    /// </summary>
+    /// <param name="actionsOut">And output action array.</param> 
+    public override void Heuristic(float[] actionsOut)
+    {
+        // Create a placeholder for all the movements/turning
+        Vector3 forward = Vector3.zero;
+        Vector3 left = Vector3.zero;
+        Vector3 up = Vector3.zero;
+        float pitch = 0f;
+        float yaw = 0f;
+
+        // convert keyboard inputs to movement and turning
+        // All values should be between -1 and 1
+
+        // Forward/backward
+        if (Input.GetKey(KeyCode.W)) forward = transform.forward;
+        else if (Input.GetKey(KeyCode.S)) forward = -transform.forward;
+
+        //left/right 
+        if (Input.GetKey(KeyCode.A)) left = -transform.right;
+        else if (Input.GetKey(KeyCode.D)) left = transform.right;
+
+        // Up/down
+        if (Input.GetKey(KeyCode.E)) up = transform.up;
+        else if (Input.GetKey(KeyCode.C)) up = -transform.up;
+
+        // Pitch up/down 
+        if (Input.GetKey(KeyCode.UpArrow)) pitch = 1f;
+        else if (Input.GetKey(KeyCode.DownArrow)) pitch = -1f;
+
+        // yaw left/right
+        if (Input.GetKey(KeyCode.LeftArrow)) pitch = -1f;
+        else if (Input.GetKey(KeyCode.RightArrow)) pitch = 1f;
+
+        // Combine the movement vector and normalize
+        Vector3 combined = (forward + left + up).normalized;
+
+        // Add the 3 movement values, pitch and yaw to the actionsOut array
+
+        actionsOut[0] = combined.x;
+        actionsOut[1] = combined.y;
+        actionsOut[2] = combined.z;
+        actionsOut[3] = pitch;
+        actionsOut[4] = yaw;
+        
     }
 
 
