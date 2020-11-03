@@ -78,7 +78,7 @@ public class HummingbirdAgent : Agent
         }
 
         // Reset nectar obtained
-        nectarObtained = 0f;
+        NectarObtained = 0f;
 
         // Zero out velocities so that movement stops before a new episode begins
         rigidbody.velocity = Vector3.zero;
@@ -99,6 +99,53 @@ public class HummingbirdAgent : Agent
         UpdateNearestFlower();
     }
 
+    /// <summary>
+    /// Called when an Action is recieved from either the player input or the neural network
+    /// 
+    /// vectorAction[i] represents:
+    /// Index 0: move vector x (+1 = right , -1 = left)
+    /// Index 1: move vector y (+1 = up, -1 = down)
+    /// Index 2: move vector z (+1 = forward, -1 = backward)
+    /// Index 3: pitch angle (+1 = pitch up, -1 = pitch down)
+    /// index 4: yaw angle (+1 = turn right, -1 = turn left)
+    /// </summary>
+    /// <param name="vectorAction"></param>
+
+    public override void OnActionReceived(float[] vectorAction)
+    {
+        // Dont take actions if frozen 
+        if (frozen) return;
+
+        // Calculate movement vector
+        Vector3 move = new Vector3(vectorAction[0], vectorAction[1], vectorAction[2]);
+
+        // Add a force in the dirction of the move vector
+        rigidbody.AddForce(move * moveForce);
+
+        // Get the current rotation
+        Vector3 rotationVector = transform.rotation.eulerAngles;
+
+        // Calculate Pitch and yaw rotation
+        float pitchChange = vectorAction[3];
+        float yawChange = vectorAction[4];
+
+        // Calculate smooth rotation changes
+        smoothPitchChange = Mathf.MoveTowards(smoothPitchChange, pitchChange, 2f * Time.fixedDeltaTime);
+        smoothYawChange = Mathf.MoveTowards(smoothYawChange, yawChange, 2f * Time.fixedDeltaTime);
+
+        // Calculate new pitch and yaw based on smoothed values
+        // Clamp pitch to avoid flipping up side down
+        float pitch = rotationVector.x + smoothPitchChange * Time.fixedDeltaTime * pitchSpeed;
+        if (pitch > 180)  pitch -= 360;
+        pitch = Mathf.Clamp(pitch, -MaxPitchAngle, MaxPitchAngle);
+
+        float yaw = rotationVector.y + smoothYawChange * Time.fixedDeltaTime * yawSpeed;
+
+        // Apply the new rotation
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+
+    }
+   
     /// <summary>
     /// Move agent to a safe random position (i.e does not collide with anything)
     /// If, infront of flower, also point the beak at the flower
@@ -162,8 +209,33 @@ public class HummingbirdAgent : Agent
             transform.position = potentialPosition;
             transform.rotation = potentialRotation;
         }
+    }
 
+    /// <summary>
+    /// Update the nearest flower to the agent
+    /// </summary>
+    private void UpdateNearestFlower()
+    {
+        foreach (Flower flower in flowerArea.Flowers)
+        {
+            if(nearestFlower == null && flower.HasNectar)
+            {
+                //Noi current nearest flower and this flower has nectar, so set to this flower
+                nearestFlower = flower;
+            }
+            else if (flower.HasNectar)
+            {
+                //Calculate distance to this flower and distance to the cirrent nearest flower
+                float distanceToFlower = Vector3.Distance(flower.transform.position, beakTip.position);
+                float distanceToCurrentNearestFlower = Vector3.Distance(nearestFlower.transform.position, beakTip.position);
 
+                //If current nearest flower is empty OR this flower is closer, update the nearest flower
+                if(!nearestFlower.HasNectar || distanceToFlower < distanceToCurrentNearestFlower)
+                {
+                    nearestFlower = flower;
+                }
+            }
 
+        }
     }
 }
