@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
+using System;
 //note: make sure you have the MLAgents namespace installed
 
 /// <summary>
@@ -61,7 +62,7 @@ public class HummingbirdAgent : Agent
     /// </summary>
     public override void Initialize()
     {
-        rigidbody = GetComponent<RigidBody>();
+        rigidbody = GetComponent<Rigidbody>();
         flowerArea = GetComponentInParent<FlowerArea>();
 
         // if not training mode, no max step, play forever
@@ -96,5 +97,73 @@ public class HummingbirdAgent : Agent
 
         // Recalculate the nearest flower now that the agent has moved
         UpdateNearestFlower();
+    }
+
+    /// <summary>
+    /// Move agent to a safe random position (i.e does not collide with anything)
+    /// If, infront of flower, also point the beak at the flower
+    /// </summary>
+    /// <param name="inFrontOfFlower"> Whether to choose a spot in front of a flower</param>
+    private void MoveToSafeRandomPosition(bool inFrontOfFlower)
+    {
+        bool safePositionFound = false;
+        int attemptsRemaining = 100; // Prevent an infinite loop
+        Vector3 potentialPosition = Vector3.zero;
+        Quaternion potentialRotation = new Quaternion();
+
+        // Loop until a safe position has been found or we run out of attemps
+        while(!safePositionFound && attemptsRemaining > 0)
+        {
+            attemptsRemaining--;
+            if (inFrontOfFlower)
+            {
+                //Pick a random flower
+                Flower randomFlower = flowerArea.Flowers[UnityEngine.Random.Range(0, flowerArea.Flowers.Count)];
+
+                // Position 10 to 20 cm in front of flower
+                float distanceFromFlower = UnityEngine.Random.Range(.1f, .2f);
+                potentialPosition = randomFlower.transform.position + randomFlower.FlowerUpVector * distanceFromFlower;
+
+                // Point beak at flower (bird's head is center of transform)
+                Vector3 toFlower = randomFlower.FlowerCenterPosition - potentialPosition;
+                potentialRotation = Quaternion.LookRotation(toFlower, Vector3.up);
+            }
+
+            else
+            {
+                // Pick a random height from the ground
+                float height = UnityEngine.Random.Range(1.2f, 2.5f);
+
+                // Pick a random radius from the center of the area
+                float radius = UnityEngine.Random.Range(2f, 7f);
+
+                // Pick a random direction rotated around the y axis
+                Quaternion direction = Quaternion.Euler(0f, UnityEngine.Random.Range(-180f, 180f), 0f);
+
+                // Combine height, radiusm and direction to pick a potential position
+                potentialPosition = flowerArea.transform.position + Vector3.up * height + direction * Vector3.forward * radius;
+
+                // Choose and set random starting pitch and yaw
+                float pitch = UnityEngine.Random.Range(-60f, 60f);
+                float yaw = UnityEngine.Random.Range(-180f, 180f);
+                potentialRotation = Quaternion.Euler(pitch, yaw, 0f);
+            }
+
+            // Check to see if the agent will collide with anything
+
+            Collider[] colliders = Physics.OverlapSphere(potentialPosition, 0.05f);
+
+            // Safe position has been found if no colliderszx are overlapped
+            safePositionFound = colliders.Length == 00;
+
+            Debug.Assert(safePositionFound, "Could not find a safe position to spawn");
+
+            // Set the position and rotation
+            transform.position = potentialPosition;
+            transform.rotation = potentialRotation;
+        }
+
+
+
     }
 }
