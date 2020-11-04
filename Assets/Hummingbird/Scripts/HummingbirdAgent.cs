@@ -6,6 +6,7 @@ using System;
 using Unity.MLAgents.Sensors;
 using UnityEngine.Rendering.Universal.Internal;
 using UnityEditor;
+using System.Runtime.CompilerServices;
 //note: make sure you have the MLAgents namespace installed
 
 /// <summary>
@@ -382,8 +383,67 @@ public class HummingbirdAgent : Agent
             Vector3 closestPointToBeakTip = collider.ClosestPoint(beakTip.position);
 
             // check if the closest collision point is close to the beak tip
-            // collision with any thing but the beak tip should not count
+            // Note: collision with any thing but the beak tip should not count
+            if (Vector3.Distance(beakTip.position, closestPointToBeakTip) < BeakTipRadius)
+            {
+                // Look up the flower for this nectar collider
+                Flower flower = flowerArea.GetFlowerFromNectar(collider);
+
+                // Attempt to take .01 nectar
+                // Note: this is per fixed timestep, meaning it happens every .02 seconds, 50x per second
+                float nectarReceived = flower.Feed(.01f);
+
+                // Keep track of nectar obtained
+                NectarObtained += nectarReceived;
+
+                if (trainingMode)
+                {
+                    // Calculate reward for getting nectar
+                    float bonous = .02f * Mathf.Clamp01(Vector3.Dot(transform.forward.normalized, -nearestFlower.FlowerUpVector.normalized));
+                    AddReward(.01f + bonous);
+                }
+
+                // If flower is empty, update the nearest flower
+                if (!flower.HasNectar)
+                {
+                    UpdateNearestFlower();
+                }
+
+            }
         }
+    }
+
+    /// <summary>
+    /// Called when the agent collided with something solid
+    /// </summary>
+    /// <param name="collision"></param>
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(trainingMode && collision.collider.CompareTag("boundry"))
+        {
+            // Called with the area of the boundry, give a negative reward
+            AddReward(-.5f);
+        }
+    }
+
+    /// <summary>
+    /// Called Everyframe
+    /// </summary>
+    private void Update()
+    {
+        // Draw a line from the beak tip to the nearest flower
+        if (nearestFlower != null) 
+            Debug.DrawLine(beakTip.position, nearestFlower.FlowerCenterPosition, Color.green);
+    }
+
+    /// <summary>
+    /// Called every 0.02 seconds
+    /// </summary>
+    private void FixedUpdate()
+    {
+        // Avoids scenario where nearest flower nectar is stolen by opponent and not updated
+        if (nearestFlower != null && !nearestFlower.HasNectar)
+            UpdateNearestFlower();
     }
 
 }
