@@ -5,6 +5,7 @@ using Unity.MLAgents;
 using System;
 using Unity.MLAgents.Sensors;
 using UnityEngine.Rendering.Universal.Internal;
+using UnityEditor;
 //note: make sure you have the MLAgents namespace installed
 
 /// <summary>
@@ -236,6 +237,26 @@ public class HummingbirdAgent : Agent
         
     }
 
+    /// <summary>
+    /// Prevent agent movement and actions
+    /// </summary>
+    public void FreezeAgent()
+    {
+        Debug.Assert(trainingMode == false, "Freeze/Unfreeze not supported in training");
+        frozen = true;
+        rigidbody.Sleep();
+    }
+
+    /// <summary>
+    /// Resume agent movement and actions
+    /// </summary>
+    public void UnFreezeAgent()
+    {
+        Debug.Assert(trainingMode == false, "Freeze/Unfreeze not supported in training");
+        frozen = false;
+        rigidbody.WakeUp();
+    }
+
 
 
     /// <summary>
@@ -330,4 +351,39 @@ public class HummingbirdAgent : Agent
 
         }
     }
+
+    /// <summary>
+    /// Called when the agent's collider enters a trigger collider
+    /// </summary>
+    /// <param name="other">The trigger collider</param>
+    private void OnTriggerEnter(Collider other)
+    {
+        TriggerEnterOrStay(other);
+    }
+
+    /// <summary>
+    /// Called when the agent's collider stays in a trigger collider
+    /// </summary>
+    /// <param name="other">The trigger collider</param>
+    private void OnTriggerStay(Collider other)
+    {
+        TriggerEnterOrStay(other);
+    }
+
+    /// <summary>
+    /// Handles when the agent's collider enters or stays in a trigger collider
+    /// </summary>
+    /// <param name="collider">The trigger collider</param>
+    private void TriggerEnterOrStay(Collider collider)
+    {
+        // check if agent is colliding with nectar
+        if (collider.CompareTag("nectar"))
+        {
+            Vector3 closestPointToBeakTip = collider.ClosestPoint(beakTip.position);
+
+            // check if the closest collision point is close to the beak tip
+            // collision with any thing but the beak tip should not count
+        }
+    }
+
 }
