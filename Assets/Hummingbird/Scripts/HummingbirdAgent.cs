@@ -214,16 +214,16 @@ public class HummingbirdAgent : Agent
         else if (Input.GetKey(KeyCode.D)) left = transform.right;
 
         // Up/down
-        if (Input.GetKey(KeyCode.E)) up = transform.up;
-        else if (Input.GetKey(KeyCode.C)) up = -transform.up;
+        if (Input.GetKey(KeyCode.Space)) up = transform.up;
+        else if (Input.GetKey(KeyCode.Z)) up = -transform.up;
 
         // Pitch up/down 
         if (Input.GetKey(KeyCode.UpArrow)) pitch = 1f;
         else if (Input.GetKey(KeyCode.DownArrow)) pitch = -1f;
 
         // yaw left/right
-        if (Input.GetKey(KeyCode.LeftArrow)) pitch = -1f;
-        else if (Input.GetKey(KeyCode.RightArrow)) pitch = 1f;
+        if (Input.GetKey(KeyCode.LeftArrow)) yaw = -1f;
+        else if (Input.GetKey(KeyCode.RightArrow)) yaw = 1f;
 
         // Combine the movement vector and normalize
         Vector3 combined = (forward + left + up).normalized;
@@ -419,7 +419,7 @@ public class HummingbirdAgent : Agent
     /// <param name="collision"></param>
     private void OnCollisionEnter(Collision collision)
     {
-        if(trainingMode && collision.collider.CompareTag("boundry"))
+        if(trainingMode && collision.collider.CompareTag("boundary"))
         {
             // Called with the area of the boundry, give a negative reward
             AddReward(-.5f);
