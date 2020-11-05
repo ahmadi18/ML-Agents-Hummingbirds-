@@ -273,7 +273,7 @@ public class HummingbirdAgent : Agent
         Quaternion potentialRotation = new Quaternion();
 
         // Loop until a safe position has been found or we run out of attemps
-        while(!safePositionFound && attemptsRemaining > 0)
+        while (!safePositionFound && attemptsRemaining > 0)
         {
             attemptsRemaining--;
             if (inFrontOfFlower)
@@ -311,18 +311,18 @@ public class HummingbirdAgent : Agent
             }
 
             // Check to see if the agent will collide with anything
-
             Collider[] colliders = Physics.OverlapSphere(potentialPosition, 0.05f);
 
-            // Safe position has been found if no colliderszx are overlapped
+            // Safe position has been found if no colliders are overlapped
             safePositionFound = colliders.Length == 00;
+        }
 
             Debug.Assert(safePositionFound, "Could not find a safe position to spawn");
 
             // Set the position and rotation
             transform.position = potentialPosition;
             transform.rotation = potentialRotation;
-        }
+        
     }
 
     /// <summary>
