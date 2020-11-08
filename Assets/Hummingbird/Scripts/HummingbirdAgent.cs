@@ -243,7 +243,8 @@ public class HummingbirdAgent : Agent
     /// </summary>
     public void FreezeAgent()
     {
-        Debug.Assert(trainingMode == false, "Freeze/Unfreeze not supported in training");
+        
+        Debug.Assert(trainingMode==false, "Freeze/Unfreeze not supported in training");
         frozen = true;
         rigidbody.Sleep();
     }
@@ -253,7 +254,7 @@ public class HummingbirdAgent : Agent
     /// </summary>
     public void UnFreezeAgent()
     {
-        Debug.Assert(trainingMode == false, "Freeze/Unfreeze not supported in training");
+        Debug.Assert(trainingMode==false, "Freeze/Unfreeze not supported in training");
         frozen = false;
         rigidbody.WakeUp();
     }
